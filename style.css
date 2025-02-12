@@ -1,0 +1,14 @@
+body {
+    margin: 0;
+    overflow: hidden; /* Prevent scrollbars */
+    background-color: #lightblue; /* Background color */
+    display: flex;
+    justify-content: center; /* Center horizontally */
+    align-items: center;     /* Center vertically */
+    height: 100vh;          /* 100% viewport height */
+}
+
+canvas {
+    border: 2px solid black; /* Optional border for the canvas */
+    background-color: #cce0ff; /* Canvas background color */
+}
