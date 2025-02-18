@@ -1,103 +1,104 @@
-document.addEventListener('DOMContentLoaded', () => {
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    document.getElementById('gameCanvas').appendChild(canvas);
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight / 2; // 2:1 aspect ratio
+// Game Canvas Setup
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+canvas.width = 1024;
+canvas.height = 512;
 
-    const birdImg = new Image();
-    birdImg.src = 'https://deepsheikh.tech/deepsheikh_icon.png';
+// Game Variables
+const playerImg = new Image();
+playerImg.src = "https://deepsheikh.tech/deepsheikh_icon.png";
 
-    const bulletUp = new Image();
-    bulletUp.src = 'https://cdn.discordapp.com/attachments/1127326309081686189/1339166652104835154/20250212_152925.png';
-    const bulletDown = new Image();
-    bulletDown.src = 'https://cdn.discordapp.com/attachments/1127326309081686189/1339166683193020496/20250212_152937.png';
+const bulletUpImg = new Image();
+bulletUpImg.src = "https://cdn.discordapp.com/attachments/1127326309081686189/1339166652104835154/20250212_152925.png?ex=67adbba2&is=67ac6a22&hm=eb3013d965d2fa9da2adcbc10cd8cefe8c704fd9d862272265e5b0625aebfd5c&";
 
-    let bird = { x: canvas.width - 50, y: canvas.height / 2, velocity: 0, gravity: 0.25 };
-    let obstacles = [];
-    let score = 0;
-    let gameOver = false;
-    let obstacleCount = 0;
-    let lastTime = 0;
+const bulletDownImg = new Image();
+bulletDownImg.src = "https://cdn.discordapp.com/attachments/1127326309081686189/1339166683193020496/20250212_152937.png?ex=67adbba9&is=67ac6a29&hm=aed39742bd5e9cd6258a8613a17b1c893aae84bd1c6cf6375923a51efb775196&";
 
-    function draw(timestamp) {
-        const deltaTime = timestamp - lastTime;
-        lastTime = timestamp;
+const collisionSound = new Audio("https://cdn.discordapp.com/attachments/1127326309081686189/1339143763632590858/AQMCHtuiiCwXv0NmSrhRnH1fh5XHNI0a-MVmamTpH23VEZ34dDpT40KA_HkFLBqL_rYyN33BXGYK_CdGWJtgOSv8.mp3?ex=67ada651&is=67ac54d1&hm=442d26294cc299d7f891aa7867d693760aa5e26f64be74e3386d606ff9b74a3d&");
 
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(birdImg, bird.x, bird.y, 50, 50);
+const restartSound = new Audio("https://cdn.discordapp.com/attachments/1127326309081686189/1339143555012104194/Audio_2025_02_12_13_36_27.mp3?ex=67ada61f&is=67ac549f&hm=45e8f8a7d170ac61914bbaa91c7474708e72142d5339409c71dc0af36a11f4a7&");
 
-        // Move and draw obstacles
-        obstacles.forEach((obstacle, index) => {
-            ctx.drawImage(bulletUp, obstacle.x, obstacle.top, 50, 100);
-            ctx.drawImage(bulletDown, obstacle.x, obstacle.bottom, 50, 100);
+let player = { x: 900, y: 200, width: 50, height: 50, velocityY: 0, gravity: 0.5 };
+let obstacles = [];
+let frame = 0;
+let score = 0;
+let gameOver = false;
 
-            if (isColliding(bird, obstacle)) {
-                gameOver = true;
-                new Audio('https://cdn.discordapp.com/attachments/1127326309081686189/1339143763632590858/AQMCHtuiiCwXv0NmSrhRnH1fh5XHNI0a-MVmamTpH23VEZ34dDpT40KA_HkFLBqL_rYyN33BXGYK_CdGWJtgOSv8.mp3').play();
-            }
+// Controls
+document.addEventListener("keydown", () => { if (!gameOver) player.velocityY = -8; });
 
-            if (obstacle.x + 50 < bird.x && !obstacle.passed) {
-                obstacle.passed = true;
-                score += 1;
-                obstacleCount++;
-            }
+function createObstacle() {
+    let gapY = Math.random() * (canvas.height - 200) + 50;
+    obstacles.push({ x: -100, y: gapY - 150, width: 50, height: 150, type: "up" });
+    obstacles.push({ x: -100, y: gapY + 50, width: 50, height: 150, type: "down" });
+}
 
-            obstacle.x -= 2 * (deltaTime / 16); // Normalize speed with deltaTime
-            if (obstacle.x + 50 < 0) obstacles.splice(index, 1);
-        });
+function update() {
+    if (gameOver) return;
 
-        bird.velocity += bird.gravity;
-        bird.y += bird.velocity * (deltaTime / 16);
+    frame++;
+    player.velocityY += player.gravity;
+    player.y += player.velocityY;
 
-        if (bird.y > canvas.height - 50 || bird.y < 0) gameOver = true;
+    if (frame % 60 === 0) createObstacle();
 
-        document.getElementById('scoreValue').textContent = score;
+    for (let i = 0; i < obstacles.length; i++) {
+        obstacles[i].x += 4;
 
-        if (obstacleCount < 32 && !gameOver) {
-            if (Math.random() > 0.98) { // Increased frequency
-                let gap = Math.floor(Math.random() * (canvas.height - 200)) + 100;
-                obstacles.push({
-                    x: canvas.width,
-                    top: 0,
-                    bottom: gap + 100,
-                    passed: false
-                });
-            }
-        } else if (obstacleCount === 32 && obstacles.length === 0) {
-            new Audio('https://cdn.discordapp.com/attachments/1127326309081686189/1339143555012104194/Audio_2025_02_12_13_36_27.mp3').play();
-            setTimeout(() => {
-                resetGame();
-            }, 3000);
+        if (
+            player.x < obstacles[i].x + obstacles[i].width &&
+            player.x + player.width > obstacles[i].x &&
+            player.y < obstacles[i].y + obstacles[i].height &&
+            player.y + player.height > obstacles[i].y
+        ) {
+            collisionSound.play();
+            gameOver = true;
+            setTimeout(restartGame, 2000);
         }
 
-        if (!gameOver) requestAnimationFrame(draw);
+        if (obstacles[i].x === 900) score++;
     }
 
-    function resetGame() {
-        bird = { x: canvas.width - 50, y: canvas.height / 2, velocity: 0, gravity: 0.25 };
-        obstacles = [];
-        score = 0;
-        obstacleCount = 0;
-        gameOver = false;
-        lastTime = 0;
-        draw(performance.now());
+    if (score >= 32) {
+        gameOver = true;
+        restartSound.play();
+        setTimeout(restartGame, 2000);
     }
 
-    function isColliding(bird, obstacle) {
-        return (bird.x < obstacle.x + 50 && 
-                bird.x + 50 > obstacle.x && 
-                (bird.y < obstacle.top + 100 || bird.y + 50 > obstacle.bottom));
+    if (player.y >= canvas.height || player.y <= 0) {
+        collisionSound.play();
+        gameOver = true;
+        setTimeout(restartGame, 2000);
+    }
+}
+
+function restartGame() {
+    player.y = 200;
+    player.velocityY = 0;
+    obstacles = [];
+    score = 0;
+    frame = 0;
+    gameOver = false;
+}
+
+function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(playerImg, player.x, player.y, player.width, player.height);
+
+    for (let i = 0; i < obstacles.length; i++) {
+        let img = obstacles[i].type === "up" ? bulletUpImg : bulletDownImg;
+        ctx.drawImage(img, obstacles[i].x, obstacles[i].y, obstacles[i].width, obstacles[i].height);
     }
 
-    document.addEventListener('click', () => {
-        if (!gameOver) bird.velocity = -5;
-    });
+    ctx.fillStyle = "white";
+    ctx.font = "24px Arial";
+    ctx.fillText(`Score: ${score}`, 20, 30);
+}
 
-    // Wait for images to load before starting the game
-    Promise.all([new Promise(resolve => birdImg.onload = resolve), 
-                 new Promise(resolve => bulletUp.onload = resolve),
-                 new Promise(resolve => bulletDown.onload = resolve)]).then(() => {
-        draw(performance.now());
-    }).catch(console.error);
-});
+function gameLoop() {
+    update();
+    draw();
+    requestAnimationFrame(gameLoop);
+}
+
+gameLoop();
