@@ -1,28 +1,22 @@
 body {
     margin: 0;
+    overflow: hidden;
     display: flex;
     justify-content: center;
     align-items: center;
+    background-color: black;
     height: 100vh;
-    background-image: url('https://media.istockphoto.com/id/981726654/vector/underwater-landscape-game-background.jpg');
-    background-size: cover;
-    background-repeat: no-repeat;
-    background-position: center;
 }
 
-#gameCanvas {
-    width: 100vw;
-    height: 50vw; /* Aspect ratio 2:1 */
+#game-container {
     position: relative;
-    overflow: hidden;
+    width: 1024px;
+    height: 512px;
 }
 
-#score {
-    position: absolute;
-    top: 10px;
-    left: 10px;
-    color: white;
-    font-family: Arial, sans-serif;
-    font-size: 24px;
-    z-index: 10;
+canvas {
+    display: block;
+    background: url('https://media.istockphoto.com/id/981726654/vector/underwater-landscape-game-background.jpg?s=612x612&w=0&k=20&c=-kQavWXCeUIonsSEB5NCkNs5ddmtcp2i8SsFH8Uw0w4=') no-repeat center;
+    background-size: cover;
+    border: 2px solid white;
 }
